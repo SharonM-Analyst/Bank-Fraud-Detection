@@ -1,0 +1,39 @@
+column_name,data_type,category,description,example_values,nullable
+transaction_id,string,Identifier,Unique transaction identifier with TXN_ prefix,"TXN_F08A86FFD87C, TXN_C2D08134EC83",No
+customer_id,string,Identifier,Unique customer identifier with CUST_ prefix,"CUST_0002AED1, CUST_3FA91B02",No
+timestamp,datetime,Temporal,Transaction date and time (all transactions within 2023),"2023-01-14 04:31:09, 2023-05-22 14:08:31",No
+amount,float,Transaction,Transaction amount in Nigerian Naira. Legitimate amounts follow channel-specific log-normal distributions. Fraud amounts are adjusted to match NIBSS channel-specific average loss patterns,"32266.83, 72530.49, 168152.87",No
+channel,string,Categorical,Transaction channel. Distribution calibrated to NIBSS 2023 data,"Mobile, Web, POS, IB, ECOM, ATM",No
+merchant_category,string,Categorical,Merchant category classification,"Retail, Grocery, Fuel, ATM_Withdrawal, Transfer, Bill_Payment, Airtime, Restaurant, Transport, Medical, Education, Entertainment, Fashion, Electronics",No
+bank,string,Categorical,Nigerian bank processing the transaction,"GTBank, FirstBank, Zenith, UBA, Access, Fidelity, Sterling, FCMB, Wema, Union",No
+location,string,Categorical,Nigerian state where transaction originated. Lagos-centric distribution (48%),"Lagos, Abuja, Rivers, Ogun, Oyo, Other",No
+age_group,string,Categorical,Customer age band based on NIBSS demographic data,"<20, 20-29, 30-39, 40+",No
+hour,integer,Temporal,Hour of transaction extracted from timestamp (0-23),"0, 8, 15, 23",No
+day_of_week,integer,Temporal,Day of week extracted from timestamp (0=Monday through 6=Sunday),"0, 3, 5",No
+month,integer,Temporal,Month of transaction extracted from timestamp (1-12),"1, 5, 12",No
+is_weekend,boolean,Temporal,Whether the transaction occurred on Saturday or Sunday,"True, False",No
+is_peak_hour,boolean,Temporal,Whether the transaction occurred during Nigerian banking peak hours (10-11 AM and 2-4 PM),"True, False",No
+tx_count_24h,float,Behavioral,Number of transactions by the same customer in the preceding 24-hour window,"1.0, 3.0, 7.0",No
+amount_sum_24h,float,Behavioral,Sum of transaction amounts by the same customer in the preceding 24-hour window,"32266.83, 150420.50",No
+amount_mean_7d,float,Behavioral,Mean transaction amount by the same customer over the preceding 7-day window,"52398.66, 85707.76",No
+amount_std_7d,float,Behavioral,Standard deviation of transaction amounts by the same customer over the preceding 7-day window. Zero if only one transaction in window,"0.0, 20131.83, 62633.51",No
+tx_count_total,integer,Behavioral,Total number of transactions by the customer across the entire dataset,"1, 50, 107, 250",No
+amount_mean_total,float,Behavioral,Mean transaction amount by the customer across the entire dataset,"170389.87, 52000.25",No
+amount_std_total,float,Behavioral,Standard deviation of transaction amounts by the customer across the entire dataset. Zero if customer has only one transaction,"0.0, 365915.90",No
+channel_diversity,integer,Behavioral,Number of unique transaction channels used by the customer (1-6),"1, 3, 5, 6",No
+location_diversity,integer,Behavioral,Number of unique locations (states) the customer transacted from,"1, 2",No
+amount_vs_mean_ratio,float,Behavioral,Ratio of current transaction amount to the customer's historical mean amount. Values above 1.0 indicate above-average spending,"0.058, 0.189, 0.987, 3.5",No
+online_channel_ratio,float,Behavioral,Proportion of the customer's transactions conducted via online channels (Mobile + Web + ECOM),"0.0, 0.45, 0.776, 1.0",No
+is_fraud,integer,Target,Fraud label. 0 = legitimate transaction; 1 = fraudulent transaction. Overall fraud rate is 0.30% (3000 out of 1000000),"0, 1",No
+fraud_technique,string,Target,Fraud technique for fraudulent transactions. Empty for legitimate transactions,"SOCIAL_ENGINEERING, ROBBERY, CARD_THEFT, PIN_COMPROMISE, PHISHING, OTHER",Yes
+hour_sin,float,Engineered,Sine component of cyclic hour encoding: sin(2*pi*hour/24). Captures cyclical time patterns for ML models,"-1.0 to 1.0",No
+hour_cos,float,Engineered,Cosine component of cyclic hour encoding: cos(2*pi*hour/24). Paired with hour_sin for full cyclical representation,"-1.0 to 1.0",No
+day_sin,float,Engineered,Sine component of cyclic day-of-week encoding: sin(2*pi*day_of_week/7),"-1.0 to 1.0",No
+day_cos,float,Engineered,Cosine component of cyclic day-of-week encoding: cos(2*pi*day_of_week/7),"-1.0 to 1.0",No
+month_sin,float,Engineered,Sine component of cyclic month encoding: sin(2*pi*month/12),"-1.0 to 1.0",No
+month_cos,float,Engineered,Cosine component of cyclic month encoding: cos(2*pi*month/12),"-1.0 to 1.0",No
+amount_log,float,Engineered,Log-transformed transaction amount: log(1 + amount). Reduces skewness for ML models,"9.20, 10.38, 11.19, 12.03",No
+amount_rounded,integer,Engineered,Whether the transaction amount is a round number (amount modulo 1000 equals 0). 0 = not round; 1 = round,"0, 1",No
+velocity_score,float,Engineered,Transaction velocity indicator: tx_count_24h * amount_sum_24h / (amount_mean_total + 1). Higher values suggest unusual transaction bursts,"0.058, 0.189, 5.2, 25.0",No
+merchant_risk_score,float,Engineered,Risk score assigned to the merchant category (0 to 1). High-risk categories (Electronics/Fashion/Entertainment) sampled from Beta(6;4); low-risk (Grocery/Fuel/Medical) from Beta(2;8); others from Beta(3;6),"0.21, 0.44, 0.88",No
+composite_risk,float,Engineered,"Weighted composite risk score combining: merchant_risk_score (0.3) + normalized amount_vs_mean_ratio (0.3) + normalized velocity_score (0.2) + high_frequency_indicator (0.2, where tx_count_24h > 5)","0.07, 0.16, 0.28, 0.65",No
